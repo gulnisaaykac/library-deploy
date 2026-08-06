@@ -1,0 +1,69 @@
+# Kubernetes API versiyonu (Deployment icin apps/v1)
+apiVersion: apps/v1
+# Bu dosyanin ilk kaynagi: Deployment = uygulamayi ayakta tutar
+kind: Deployment
+metadata:
+  # Deployment adi (kubectl get deploy ile gorunur)
+  name: library-api
+spec:
+  # Kac kopya (Pod) calissin
+  replicas: 1
+  selector:
+    matchLabels:
+      # Service hangi Pod'lari bulacak? Bu etikete bakacak
+      app: library-api
+  template:
+    # Her yeni Pod'un "sablonu"
+    metadata:
+      labels:
+        # Pod'a yapistirilan etiket (selector ile eslesmeli)
+        app: library-api
+    spec:
+      containers:
+        - name: library-api
+          # Kullanilacak Docker imaji
+          image: library-api:v2
+          # Docker Hub'dan cekme; Minikube'deki local imaji kullan
+          imagePullPolicy: Never
+          ports:
+            # Konteyner icinde API'nin dinledigi port
+            - containerPort: 8080
+          # Kaynak ayari
+          resources:
+            requests:
+              # en az 0.1 CPU ve 256Mi RAM
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              # en fazla 0.5 CPU ve 512Mi RAM
+              cpu: "500m"
+              memory: "512Mi"
+          env:
+            # .NET ortami (Production)
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Production
+            # SQL connection string Secret'tan gelir (git'te sifre yok)
+            # Once: kubectl apply -f secret.yaml
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: library-api-secret
+                  key: ConnectionStrings__DefaultConnection
+---
+# Asagisi ikinci kaynak: Service = disariya kapi acar
+apiVersion: v1
+kind: Service
+metadata:
+  # Service adi
+  name: library-api
+spec:
+  # NodePort = cluster disindan sabit port ile erisim
+  type: NodePort
+  selector:
+    # Trafik hangi Pod'lara gidecek (Deployment label ile ayni)
+    app: library-api
+  ports:
+    - port: 8080          # Cluster icinden Service'e gelinen port
+      targetPort: 8080    # Pod/konteynerdeki gercek port
+      nodePort: 30065     # Disaridan erisim kapisi (API)
+      

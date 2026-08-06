@@ -1,0 +1,57 @@
+# Kubernetes API versiyonu (Deployment icin apps/v1)
+apiVersion: apps/v1
+# Bu dosyanin ilk kaynagi: Deployment = UI'yi ayakta tutar
+kind: Deployment
+metadata:
+  # Deployment adi
+  name: library-ui
+spec:
+  # Kac kopya (Pod) calissin
+  replicas: 1
+  selector:
+    matchLabels:
+      # Service hangi Pod'lari bulacak?
+      app: library-ui
+  template:
+    # Her yeni Pod'un sablonu
+    metadata:
+      labels:
+        # Pod etiketi (selector ile eslesmeli)
+        app: library-ui
+    spec:
+      containers:
+        - name: library-ui
+          # Angular + nginx Docker imaji
+          image: library-ui:v2
+          # Local Minikube imajini kullan (Hub'dan cekme)
+          imagePullPolicy: Never
+          ports:
+            # nginx 80 portunu dinliyor
+            - containerPort: 80
+          resources:
+            requests:
+              #en az 0.05 CPU ve 64 MB RAM ayır
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              #en fazla 0.2 CPU ve 128 MB RAM kullan
+              cpu: "200m"
+              memory: "256Mi"
+          # Not: UI SQL bilmez; nginx /api isteklerini library-api'ye proxy eder
+---
+# Asagisi ikinci kaynak: Service = UI icin disariya kapı
+apiVersion: v1
+kind: Service
+metadata:
+  # Service adi
+  name: library-ui
+spec:
+  # NodePort = tarayicidan erisim icin
+  type: NodePort
+  selector:
+    # Trafik library-ui Pod'larina gitsin
+    app: library-ui
+  ports:
+    - port: 80           # Cluster icinden Service portu
+      targetPort: 80     # Pod'daki nginx portu
+      nodePort: 30080    # Disaridan erisim kapisi (UI)

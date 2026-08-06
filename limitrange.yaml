@@ -1,0 +1,25 @@
+apiVersion: v1 
+kind: LimitRange
+metadata: 
+    name: library-limitrange
+spec:
+    limits:
+        - type: Container
+        #resources.request yazılmazsa bu gelir
+          defaultRequest:
+            cpu: "50m"
+            memory: "64Mi"
+        # resources.limits yazilmazsa bunlar gelir
+          default:
+            cpu: "200m"
+            memory: "128Mi"
+        # bir konteyner bundan fazla isteyemez 
+          max: 
+            cpu: "1"
+            memory: "1Gi"
+        # bir konteyner bundan az request yazamaz
+          min:
+            cpu: "10m"
+            memory: "32Mi" 
+
+#api.yaml / ui.yaml zaten resources yazdığı için çoğu zaman default’lar devreye girmez; max/min yine koruma olarak durur.

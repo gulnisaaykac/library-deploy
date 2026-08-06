@@ -1,0 +1,34 @@
+# Bu kaynak icin API surumu. ResourceQuota v1 altinda.
+apiVersion: v1
+
+# Kaynak tipi: ResourceQuota = namespace'in TOPLAM kaynak tavani
+kind: ResourceQuota
+
+metadata:
+  # Bu kotanin adi. Sonra: kubectl describe quota library-quota
+  name: library-quota
+
+spec:
+  # Kurallar burada baslar
+
+  # "Sert tavan" listesi. Bunlari asamazsin;
+  # asmaya calisirsan yeni Pod acilmaz / Pending kalir.
+  hard:
+    # Bu namespace'te ayni anda en fazla 8 Pod
+    pods: "8"
+
+    # Tum Pod'larin requests.cpu TOPLAMI en fazla 2 CPU (2000m)
+    requests.cpu: "2"
+
+    # Tum Pod'larin requests.memory toplami en fazla 2Gi
+    requests.memory: "2Gi"
+
+    # Tum Pod'larin limits.cpu toplami en fazla 4 CPU
+    limits.cpu: "4"
+
+    # Tum Pod'larin limits.memory toplami en fazla 4Gi
+    limits.memory: "4Gi"
+
+# LimitRange = tek konteyner kurali
+# ResourceQuota = herkesin toplami (namespace kasasi)
+# Ornek: API 100m + UI 50m = 150m request → "2" CPU tavani altinda rahat sigar
