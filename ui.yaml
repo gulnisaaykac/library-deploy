@@ -22,7 +22,7 @@ spec:
       containers:
         - name: library-ui
           # Angular + nginx Docker imaji
-          image: library-ui:v2
+          image: library-ui:v3
           # Local Minikube imajini kullan (Hub'dan cekme)
           imagePullPolicy: Never
           ports:
