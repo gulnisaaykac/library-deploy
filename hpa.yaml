@@ -1,0 +1,24 @@
+#Hpa v2 cpu hedefleri için güncel sürüm)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  #kubectl get hpa da bu isim ile görğnür
+  name: library-api-hpa
+spec:
+  #hangi deployment scale edilecek 
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: library-api
+  # en az bir pod en fazla üç pod
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource:
+        # cpu kullanımına bak 
+        name: cpu
+        target:
+          #ortalama cpu requestin yüzdesi olarak
+          type: Utilization
+          averageUtilization: 10
