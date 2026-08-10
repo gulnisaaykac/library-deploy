@@ -21,4 +21,4 @@ spec:
         target:
           #ortalama cpu requestin yüzdesi olarak
           type: Utilization
-          averageUtilization: 10
+          averageUtilization: 50
