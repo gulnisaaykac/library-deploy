@@ -22,7 +22,7 @@ spec:
       containers:
         - name: library-api
           # Kullanilacak Docker imaji
-          image: library-api:v2
+          image: library-api:v3
           # Docker Hub'dan cekme; Minikube'deki local imaji kullan
           imagePullPolicy: Never
           ports:
@@ -38,17 +38,78 @@ spec:
               # en fazla 0.5 CPU ve 512Mi RAM
               cpu: "500m"
               memory: "512Mi"
+          #uygulama ilk açılırken daha başlamadı mı diye kontrol eder
+          startupProbe:
+            httpGet:
+              #konterynerın içindeki bu adrese http get atar
+              path: /health/live
+              port: 8080
+            #30 kez fail olursa pod u başarısız sayar ve yeniden başlatır
+            failureThreshold: 30
+            #her iki sayiede bir dener
+            periodSeconds: 2
+          #açıldıktan sonra hala canlı mı değilse ysnişsden başlat
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+            #ilk kontrolu açıldıktan on saniye sonra yap
+            initialDelaySeconds: 10
+            # üç kez fail ---> pod restaert
+            failureThreshold: 3
+            #her on saniyede bi kontrol et
+            periodSeconds: 10
+          
+          # trafik göndereyim mi diye kontrol eder
+          #fail olursa restart yok sadece service pod a istek atmaz
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            initialDelaySeconds: 5
+            failureThreshold: 3
+            periodSeconds: 5
           env:
-            # .NET ortami (Production)
+            # Acik ayar: ConfigMap'ten gelir (sifre degil)
             - name: ASPNETCORE_ENVIRONMENT
-              value: Production
-            # SQL connection string Secret'tan gelir (git'te sifre yok)
+              valueFrom:
+                configMapKeyRef:
+                  # configmap.yaml icindeki metadata.name ile ayni olmali
+                  name: library-api-configmap
+                  # ConfigMap data altindaki key adi
+                  key: ASPNETCORE_ENVIRONMENT
+            # API konteyner icinde hangi adreste/portta dinlesin
+            - name: ASPNETCORE_URLS
+              valueFrom:
+                configMapKeyRef:
+                  name: library-api-configmap
+                  key: ASPNETCORE_URLS
+            # JWT Issuer - appsettings Jwt:Issuer (Jwt__ = nested)
+            - name: Jwt__Issuer
+              valueFrom:
+                configMapKeyRef:
+                  name: library-api-configmap
+                  key: Jwt__Issuer
+            # JWT Audience - appsettings Jwt:Audience
+            - name: Jwt__Audience
+              valueFrom:
+                configMapKeyRef:
+                  name: library-api-configmap
+                  key: Jwt__Audience
+            # SQL connection string - gizli, Secret'tan gelir
             # Once: kubectl apply -f secret.yaml
             - name: ConnectionStrings__DefaultConnection
               valueFrom:
                 secretKeyRef:
+                  # secret.yaml icindeki metadata.name ile ayni
                   name: library-api-secret
                   key: ConnectionStrings__DefaultConnection
+            # JWT imza anahtari - gizli, Secret'tan gelir
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: library-api-secret
+                  key: Jwt__Key
 ---
 # Asagisi ikinci kaynak: Service = disariya kapi acar
 apiVersion: v1
@@ -66,4 +127,3 @@ spec:
     - port: 8080          # Cluster icinden Service'e gelinen port
       targetPort: 8080    # Pod/konteynerdeki gercek port
       nodePort: 30065     # Disaridan erisim kapisi (API)
-      

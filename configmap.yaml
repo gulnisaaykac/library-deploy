@@ -1,0 +1,18 @@
+#kubernetse bu kaynak v1 API'si ile calisir diyo 
+#Configmap için STANDART bu 
+apiVersion: v1
+#bu objenin tipi Configmap yani gizli olmayan ayar deposu 
+kind: ConfigMap
+#isim etiketleri gibi kimlik bilgileri buraya yazilir
+metadata:
+  #deplomentta da ayni isimle kullanacaksın 
+  name: library-api-configmap
+#asıl key value değerler burda HEPSİ STRİNG 
+data: 
+  #.net e production modundayım der
+  ASPNETCORE_ENVIRONMENT: "Production"
+  #.net e hangi portu dinleyeceğini söyler
+  ASPNETCORE_URLS: "http://+:8080"
+  # JWT ayarları
+  Jwt__Issuer: "LibraryApi"
+  Jwt__Audience: "LibraryAngular"
