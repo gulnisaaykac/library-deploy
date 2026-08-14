@@ -61,3 +61,22 @@ UI tarayicide acilir. `/api` isteklerini nginx `library-api` servisine proxy ede
 
 - `secret.yaml` GitHub'a commit edilmez.
 - SQL Server host makinede; pod `host.minikube.internal,1433` ile baglanir.
+
+
+## Ingress
+
+    minikube addons enable ingress
+    kubectl apply -f ingress.yamlk
+
+Windows'ta IIS port 80'i tutuyorsa:
+
+    Stop-Service W3SVC -Force
+    minikube tunnel
+
+Tarayici: http://127.0.0.1
+
+Alternatif:
+
+    kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 8080:80
+
+Tarayici: http://127.0.0.1:8080

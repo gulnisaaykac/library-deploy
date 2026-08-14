@@ -1,0 +1,25 @@
+# Disaridan gelen HTTP trafikini yonlendirir
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: library-ingress
+  #ingress controllerda eksta ayarlar
+  annotations: 
+    # Path sonundaki / ile ilgili nginx ingress ayari
+    #http yi zorla https e çevirme minikube da sertifika yok true olursa tarayıcı bozulabilir
+    nginx.ingress.kubernetes.io/ssl-redirect: "false" 
+#asıl kurallar burda
+spec:
+  #bu kuralları nginx ingress controller uygulasın -> addonun kurduğu 
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          # Her sey UI'ya gitsin; UI nginx /api yi API'ye proxy eder
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: library-ui
+                port:
+                  number: 80
