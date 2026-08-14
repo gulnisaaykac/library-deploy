@@ -19,6 +19,21 @@ spec:
         # Pod'a yapistirilan etiket (selector ile eslesmeli)
         app: library-api
     spec:
+      # Asil API'den once calisir; SQL hazir olana kadar bekler
+      initContainers:
+       - name: wait-for-sql
+         # Kucuk imaj; sadece port kontrolu icin
+         image: busybox:1.36
+         command:
+          - sh
+          - -c
+          - |
+            echo "SQL bekleniyor (host.minikube.internal:1433)..."
+            until nc -z host.minikube.internal 1433; do
+              echo "SQL henuz yok, 2sn sonra tekrar..."
+              sleep 2
+            done
+            echo "SQL portu acik, init bitti."
       containers:
         - name: library-api
           # Kullanilacak Docker imaji
