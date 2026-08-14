@@ -66,7 +66,7 @@ UI tarayicide acilir. `/api` isteklerini nginx `library-api` servisine proxy ede
 ## Ingress
 
     minikube addons enable ingress
-    kubectl apply -f ingress.yamlk
+    kubectl apply -f ingress.yaml
 
 Windows'ta IIS port 80'i tutuyorsa:
 
