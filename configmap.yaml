@@ -16,3 +16,4 @@ data:
   # JWT ayarları
   Jwt__Issuer: "LibraryApi"
   Jwt__Audience: "LibraryAngular"
+  Groq__Model: "llama-3.3-70b-versatile"

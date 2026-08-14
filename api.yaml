@@ -125,6 +125,17 @@ spec:
                 secretKeyRef:
                   name: library-api-secret
                   key: Jwt__Key
+
+            - name: Groq__ApiKey
+              valueFrom:
+                secretKeyRef:
+                  name: library-api-secret
+                  key: Groq__ApiKey
+            - name: Groq__Model
+              valueFrom:
+                configMapKeyRef:
+                  name: library-api-configmap
+                  key: Groq__Model
 ---
 # Asagisi ikinci kaynak: Service = disariya kapi acar
 apiVersion: v1
