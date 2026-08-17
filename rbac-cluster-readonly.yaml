@@ -1,0 +1,46 @@
+# ============================================================
+# ClusterRole + ClusterRoleBinding
+# Amac: library-readonly SA, TUM namespace'lerde pod get/list yapabilsin
+#       ama delete yapamasin (Role sadece default'taydi; bu cluster geneli)
+# ============================================================
+
+---
+# Kubernetes RBAC API surumu
+apiVersion: rbac.authorization.k8s.io/v1
+# Role degil ClusterRole = tek namespace degil, tum cluster
+kind: ClusterRole
+metadata:
+  # ClusterRole adi (namespace alani YOK - cluster seviyesinde)
+  name: library-pod-reader-cluster
+rules:
+  # Izin kurallari listesi
+  - apiGroups: [""]
+    # "" = core API grubu (pods, services burada; apps/v1 degil)
+    resources: ["pods"]
+    # Sadece bu kaynak turu
+    verbs: ["get", "list"]
+    # get = tek pod bak; list = listele
+    # delete/create/update YOK => yazma/silme yok
+
+---
+# Kubernetes RBAC API surumu
+apiVersion: rbac.authorization.k8s.io/v1
+# ClusterRole'u bir Subject'e (SA/user) baglar
+kind: ClusterRoleBinding
+metadata:
+  # Binding adi (bunun da namespace'i yok)
+  name: library-pod-reader-cluster-binding
+roleRef:
+  # roleRef = HANGI yetki tarifini bagliyoruz?
+  apiGroup: rbac.authorization.k8s.io
+  # Role degil ClusterRole oldugunu belirt
+  kind: ClusterRole
+  # Yukaridaki ClusterRole'un adi ile ayni olmali
+  name: library-pod-reader-cluster
+subjects:
+  # subjects = KIME veriyoruz?
+  - kind: ServiceAccount
+    # Daha once olusturdugumuz SA
+    name: library-readonly
+    # SA hangi namespace'te yasiyor? (SA'nin evi default)
+    namespace: default
