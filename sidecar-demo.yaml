@@ -1,0 +1,56 @@
+# ============================================================
+# Sidecar demo
+# Ana container: paylasilan klasore log yazar
+# Sidecar: ayni klasoru okur (tail)
+# Ikisi ayni Pod = ayni ag + emptyDir volume paylasimi
+# ============================================================
+apiVersion: v1
+kind: Pod
+metadata:
+  # Bu lab pod'unun adi
+  name: sidecar-demo
+  namespace: default
+spec:
+  # restartPolicy: Pod duzeyinde (Always = dusunce yeniden baslat)
+  restartPolicy: Always
+  containers:
+    # ---------- ANA UYGULAMA CONTAINER ----------
+    - name: app
+      # Kucuk imaj; sadece shell komutu calistiracagiz
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        # Her 2 sn bir satır yaz; paylasilan volume'e
+        - |
+          echo "app basladi" >> /shared/app.log
+          while true; do
+            echo "$(date) merhaba from app" >> /shared/app.log
+            sleep 2
+          done
+      volumeMounts:
+        # /shared bu Pod'daki emptyDir'e bagli
+        - name: shared-data
+          mountPath: /shared
+
+    # ---------- SIDECAR CONTAINER ----------
+    # Ana kodu degistirmeden yardimci is: log'u izler
+    - name: log-sidecar
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        # Dosya olusana kadar bekle, sonra takip et
+        - |
+          echo "sidecar basladi, log bekleniyor..."
+          while [ ! -f /shared/app.log ]; do sleep 1; done
+          tail -f /shared/app.log
+      volumeMounts:
+        # Ayni volume = ayni dosyalari gorur
+        - name: shared-data
+          mountPath: /shared
+
+  volumes:
+    # Pod icinde gecici paylasilan klasor (Pod silinince gider)
+    - name: shared-data
+      emptyDir: {}
