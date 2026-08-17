@@ -1,0 +1,130 @@
+# ============================================================
+# library Helm chart - values.yaml
+# Amac: ileride api.yaml / ui.yaml yerine buradan ayar vermek
+# Bugun: iskelet. Gercek Minikube deploy hâlâ eski yaml'larla
+# ============================================================
+
+# -------------------- API --------------------
+api:
+  # Kac API Pod calissin
+  replicaCount: 1
+  image:
+    # Local Minikube imaj adi (docker images'taki)
+    repository: library-api
+    # Imaj etiketi (senin kullandigin v3)
+    tag: "v3"
+    # Never = Docker Hub'dan cekme, local imaji kullan
+    pullPolicy: Never
+  service:
+    # Disariya NodePort ile ac (senin api.yaml gibi)
+    type: NodePort
+    # Service / container portu
+    port: 8080
+    # Cluster disindan sabit port
+    nodePort: 30065
+
+# -------------------- UI ---------------------
+ui:
+  # Kac UI Pod calissin
+  replicaCount: 1
+  image:
+    # Angular+nginx imaji
+    repository: library-ui
+    tag: "v3"
+    pullPolicy: Never
+  service:
+    type: NodePort
+    # nginx 80
+    port: 80
+    nodePort: 30080
+
+# ============================================================
+# Asagisi: helm create'in varsayilan template'leri icin stub
+# (templates/ hâlâ nginx ornegi; api/ui template'e cevirince
+# bu blogu sadeleştiririz)
+# ============================================================
+
+# Ornek Deployment kac kopya
+replicaCount: 1
+
+image:
+  # Gecici ornek imaj (library api/ui degil)
+  repository: nginx
+  pullPolicy: IfNotPresent
+  # Bos = Chart.yaml appVersion kullanilir
+  tag: ""
+
+# Private registry secret listesi (bizde yok)
+imagePullSecrets: []
+# Chart adini ezmek icin (bos birak)
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Ornek chart SA olustursun mu
+  create: true
+  # API token otomatik mount
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+podSecurityContext: {}
+securityContext: {}
+
+service:
+  # Ornek service tipi
+  type: ClusterIP
+  port: 80
+
+ingress:
+  # Ingress'i bu ornek chart'ta kapali tut
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+httpRoute:
+  enabled: false
+  annotations: {}
+  parentRefs:
+    - name: gateway
+      sectionName: http
+  hostnames:
+    - chart-example.local
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /headers
+
+resources: {}
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+autoscaling:
+  # HPA'yi ornek chart'ta kapali tut (sende ayri hpa.yaml var)
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+volumes: []
+volumeMounts: []
+nodeSelector: {}
+tolerations: []
+affinity: {}
