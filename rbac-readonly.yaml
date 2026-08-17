@@ -1,0 +1,44 @@
+#SERVİCEACCONUNT-KİMLİK
+#bu kaynak tipi v1 ile api de
+apiVersion: v1
+#podun kullanacağı hesap 
+kind: ServiceAccount
+metadata:
+  #hesabın adı 
+  name: library-readonly
+  #default naöesapcede 
+  namespace: default
+
+#burdan sonra bi sonraki kaynak başlıypr 
+---
+apiVersion: rbac.authorization.k8s.io/v1
+#sadece bu namespace için kurallar
+kind: Role
+metadata:
+  #rol adi 
+  name: library-pod-reader
+  namespace: default
+rules:
+    #çekşirdek api 
+  - apiGroups: [""]
+    #yetki sadece podlarda
+    resources: ["pods"]
+    #tekil getir + listele
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+#rolu şu kişiye ver
+kind: RoleBinding
+metadata:
+  name: library-pod-reader-binding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  #hangi rol
+  name: library-pod-reader
+subjects:
+#kime?
+  - kind: ServiceAccount
+    name: library-readonly
+    namespace: default
