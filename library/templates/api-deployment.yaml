@@ -4,95 +4,79 @@
 #       values.yaml içinden api.* ayarlarını çekmek.
 #
 # Not:
-# - ConfigMap/Secret adları şimdilik sabit.
-# - Minikube’daki mevcut deploy ile çakışmaması için
-#   bugün sadece helm template ile render kontrolü hedeflenir.
+# - ConfigMap/Secret adları şimdilik sabit (mevcut cluster kaynakları).
+# - name/label Helm release adina bagli; mevcut library-api ile cakışmaz.
 # ============================================================
 
-apiVersion: apps/v1 # Deployment için apps/v1
-kind: Deployment
+apiVersion: apps/v1 # Deployment icin apps/v1
+kind: Deployment # Kaynak tipi: ReplicaSet + Pod yonetir
 metadata:
-  # Deployment adı: mevcut sistemle aynı kalsın ki label/service uyumu olsun
-  name: library-api
+  # Release adi + "-api" (ornek: librarytest-api)
+  name: {{ include "library.fullname" . }}-api
   labels:
-    # Label: podları service/deployment eşleştirmesinde kullanıyoruz
-    app: library-api
+    # Service selector ile ayni olmali
+    app: {{ include "library.fullname" . }}-api
 spec:
-  # Kaç replica (values.yaml: api.replicaCount)
+  # Kac API Pod calissin (values.yaml: api.replicaCount)
   replicas: {{ .Values.api.replicaCount }}
-
   selector:
-    # Service/Deployment hangi pod’lara yönelecek?
+    # Hangi Pod'lara sahip olacagini label ile secer
     matchLabels:
-      app: library-api
-
+      app: {{ include "library.fullname" . }}-api
   template:
-    # Pod şablonu
+    # Her yeni Pod bu sablondan uretilir
     metadata:
       labels:
-        app: library-api
-
+        # Pod etiketi; selector ile birebir ayni olmali
+        app: {{ include "library.fullname" . }}-api
     spec:
-      # SQL hazır olana kadar ana container’ı başlatma (InitContainer)
+      # Ana container'dan once calisir; SQL portu acilinca biter
       initContainers:
-        - name: wait-for-sql
-          image: busybox:1.36
+        - name: wait-for-sql # Init container adi
+          image: busybox:1.36 # Kucuk imaj; nc komutu icin
           command:
-            - sh
-            - -c
+            - sh # Shell
+            - -c # Sonraki string'i komut olarak calistir
             - |
-              # 1433 portu açılana kadar bekle
               echo "SQL bekleniyor (host.minikube.internal:1433)..."
               until nc -z host.minikube.internal 1433; do
                 echo "SQL henuz yok, 2sn sonra tekrar..."
                 sleep 2
               done
               echo "SQL portu acik, init bitti."
-
       containers:
-        - name: library-api
-          # İmaj: values.yaml’dan gelir
+        - name: library-api # Konteyner adi (Deployment adindan bagimsiz)
+          # Imaj: repository:tag values'dan gelir
           image: "{{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}"
           imagePullPolicy: {{ .Values.api.image.pullPolicy }} # Never = local imaj
-
-          # API konteyner portu (values.yaml: api.service.port)
           ports:
-            - containerPort: {{ .Values.api.service.port }}
-
-          # CPU/RAM limit & request (şimdilik sabit yazdım)
+            - containerPort: {{ .Values.api.service.port }} # Konteynerin dinledigi port
           resources:
             requests:
-              cpu: "100m"
-              memory: "256Mi"
+              cpu: "100m" # En az 0.1 CPU
+              memory: "256Mi" # En az 256Mi RAM
             limits:
-              cpu: "500m"
-              memory: "512Mi"
-
-          # Startup: uygulama ilk açılırken “erken” başarısız denemesini engeller
+              cpu: "500m" # En fazla 0.5 CPU
+              memory: "512Mi" # En fazla 512Mi RAM
           startupProbe:
             httpGet:
-              path: /health/live
-              port: {{ .Values.api.service.port }}
-            failureThreshold: 30 # örn. 30 denemede vazgeç
-            periodSeconds: 2
-
-          # Liveness: “hala canlı mı?” (bozulursa restart)
+              path: /health/live # Canlilik endpoint'i
+              port: {{ .Values.api.service.port }} # Probe portu
+            failureThreshold: 30 # 30 fail olursa Pod basarisiz
+            periodSeconds: 2 # 2 sn'de bir dene
           livenessProbe:
             httpGet:
-              path: /health/live
+              path: /health/live # Hala canli mi
               port: {{ .Values.api.service.port }}
-            initialDelaySeconds: 10
-            failureThreshold: 3
-            periodSeconds: 10
-
-          # Readiness: “servis vermeye hazır mı?” (ready değilse traffic yemez)
+            initialDelaySeconds: 10 # Ilk kontrol 10 sn sonra
+            failureThreshold: 3 # 3 fail -> restart
+            periodSeconds: 10 # 10 sn'de bir
           readinessProbe:
             httpGet:
-              path: /health/ready
+              path: /health/ready # Trafik almaya hazir mi
               port: {{ .Values.api.service.port }}
             initialDelaySeconds: 5
-            failureThreshold: 3
+            failureThreshold: 3 # Fail olursa restart yok, trafik kesilir
             periodSeconds: 5
-
-          # Ortam değişkenleri:
-          #
+          env:
+            - name: ASPNETCORE_ENVIRONMENT # .

@@ -1,31 +1,21 @@
 # ============================================================
 # library Helm chart - API Service (template)
-# Amac:
-# - values.yaml içindeki api.service.* ayarlarını kullanmak
-# - NodePort ile dışarıdan erişimi sağlamak (api.yaml ile aynı mantık)
+# Amac: API Pod'larina NodePort ile kapı acmak.
+# Isim/label release'e bagli; mevcut library-api Service ile cakışmaz.
 # ============================================================
 
-apiVersion: v1 # Service için core API sürümü
-kind: Service
+apiVersion: v1 # Service icin core API
+kind: Service # Cluster icinde sabit DNS + port
 metadata:
-  name: library-api
+  name: {{ include "library.fullname" . }}-api # Ornek: librarytest-api
   labels:
-    app: library-api
+    app: {{ include "library.fullname" . }}-api # Kaynagi etiketle
 spec:
-  # Service tipi (values.yaml: api.service.type) -> NodePort
-  type: {{ .Values.api.service.type }}
-
-  # Hangi pod’lara yönelecek? (Deployment label ile aynı olmalı)
+  type: {{ .Values.api.service.type }} # NodePort (values.yaml)
   selector:
-    app: library-api
-
+    app: {{ include "library.fullname" . }}-api # Hangi Pod'lara trafik
   ports:
-    - name: http
-      # Service portu (cluster içinde)
-      port: {{ .Values.api.service.port }}
-
-      # Hedef port (pod içinde); Deployment container portu ile aynı
-      targetPort: {{ .Values.api.service.port }}
-
-      # Dışarı açılacak sabit port (values.yaml: api.service.nodePort)
-      nodePort: {{ .Values.api.service.nodePort }}
+    - name: http # Port adi
+      port: {{ .Values.api.service.port }} # Cluster icinden gelen port
+      targetPort: {{ .Values.api.service.port }} # Pod icindeki gercek port
+      nodePort: {{ .Values.api.service.nodePort }} # Disari sabit kapı

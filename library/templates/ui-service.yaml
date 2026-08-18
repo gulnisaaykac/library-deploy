@@ -1,20 +1,21 @@
 # ============================================================
 # UI Service (template)
-# Amac: UI'yi dışarı NodePort ile açmak (values'tan nodePort)
+# Amac: UI'yi NodePort ile disari acmak.
+# Isim/label release'e bagli; mevcut library-ui Service ile cakışmaz.
 # ============================================================
 
-apiVersion: v1
-kind: Service
+apiVersion: v1 # Service core API
+kind: Service # Disari kapı
 metadata:
-  name: library-ui
+  name: {{ include "library.fullname" . }}-ui # Ornek: librarytest-ui
   labels:
-    app: library-ui
+    app: {{ include "library.fullname" . }}-ui # Kaynak etiketi
 spec:
   type: {{ .Values.ui.service.type }} # NodePort
   selector:
-    app: library-ui
+    app: {{ include "library.fullname" . }}-ui # UI Pod'larina yonlendir
   ports:
-    - name: http
-      port: {{ .Values.ui.service.port }}          # 80
-      targetPort: http                              # nginx 80
-      nodePort: {{ .Values.ui.service.nodePort }}  # 30080 gibi
+    - name: http # Port adi
+      port: {{ .Values.ui.service.port }} # Cluster icinden 80
+      targetPort: http # Deployment'taki name: http portuna git
+      nodePort: {{ .Values.ui.service.nodePort }} # Disari sabit kapı

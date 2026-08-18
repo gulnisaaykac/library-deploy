@@ -1,55 +1,48 @@
 # ============================================================
 # UI Deployment (template)
-# Amac: values.yaml içindeki ui.* ayarlarıyla
-#       nginx (Angular UI) container'ını ayağa kaldırmak.
+# Amac: values.yaml ui.* ile Angular+nginx Pod'u yonetmek.
+# Isim/label release'e bagli; mevcut library-ui ile cakışmaz.
 # ============================================================
 
-apiVersion: apps/v1 # Deployment
-kind: Deployment
+apiVersion: apps/v1 # Deployment API'si
+kind: Deployment # UI kopyalarini ayakta tutar
 metadata:
-  # Mevcut deploy ile çakışmaması için sabit isim kullanıyoruz
-  name: library-ui
+  name: {{ include "library.fullname" . }}-ui # Ornek: librarytest-ui
   labels:
-    app: library-ui
+    app: {{ include "library.fullname" . }}-ui # Service bu etiketi arar
 spec:
-  replicas: {{ .Values.ui.replicaCount }} # replicas values'tan gelir
+  replicas: {{ .Values.ui.replicaCount }} # Kac UI Pod (values)
   selector:
     matchLabels:
-      app: library-ui
+      app: {{ include "library.fullname" . }}-ui # Bu label'li Pod'lari yonet
   template:
     metadata:
       labels:
-        app: library-ui
+        app: {{ include "library.fullname" . }}-ui # Pod'a ayni etiket
     spec:
       containers:
-        - name: library-ui
-          # nginx/angular imajı values'tan gelir
-          image: "{{ .Values.ui.image.repository }}:{{ .Values.ui.image.tag }}"
+        - name: library-ui # Konteyner adi
+          image: "{{ .Values.ui.image.repository }}:{{ .Values.ui.image.tag }}" # Imaj values'dan
           imagePullPolicy: {{ .Values.ui.image.pullPolicy }} # Never = local imaj
           ports:
-            - name: http
-              containerPort: 80
-
-          # kaynak ayarı (sende api'deki gibi tanımlı değil; örnek değerler)
+            - name: http # Port adi; Service targetPort: http buna bakar
+              containerPort: 80 # nginx 80
           resources:
             requests:
-              cpu: "50m"
-              memory: "128Mi"
+              cpu: "50m" # En az CPU
+              memory: "128Mi" # En az RAM
             limits:
-              cpu: "200m"
-              memory: "256Mi"
-
-          # UI'nin health check'leri (sende api.yaml'deki probe mantığı)
+              cpu: "200m" # Tavan CPU
+              memory: "256Mi" # Tavan RAM
           livenessProbe:
             httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 5
-            periodSeconds: 10
-
+              path: / # Kok sayfa canli mi
+              port: 80 # nginx portu
+            initialDelaySeconds: 5 # Ilk kontrol gecikmesi
+            periodSeconds: 10 # 10 sn'de bir
           readinessProbe:
             httpGet:
-              path: /
+              path: / # Trafik vereyim mi
               port: 80
             initialDelaySeconds: 3
             periodSeconds: 5
