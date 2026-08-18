@@ -1,0 +1,53 @@
+# ============================================================
+# NetworkPolicy lab - ortam hazirligi
+# Amac: frontend / backend / database adinda 3 nginx pod'u
+#       ayri namespace'te calistirmak (library deploy'a dokunmaz)
+# ============================================================
+
+# --- Namespace: lab kaynaklarini default'tan ayirir ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: netpol-lab   # Tum lab pod ve policy'leri bu namespace'te
+
+---
+# --- Frontend pod: kullanici tarafi gibi davranir ---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: frontend
+  namespace: netpol-lab
+  labels:
+    run: frontend    # NetworkPolicy podSelector bu label'i kullanacak
+spec:
+  containers:
+  - name: nginx
+    image: nginx     # Basit HTTP sunucu; curl ile test edecegiz
+
+---
+# --- Backend pod: frontend ile database arasinda ara katman ---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: backend
+  namespace: netpol-lab
+  labels:
+    run: backend     # Sadece frontend'den gelen trafige izin verecegiz
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+
+---
+# --- Database pod: en arkadaki servis (ornek) ---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: database
+  namespace: netpol-lab
+  labels:
+    run: database    # Sadece backend'den gelen trafige izin verecegiz
+spec:
+  containers:
+  - name: nginx
+    image: nginx

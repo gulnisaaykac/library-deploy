@@ -1,0 +1,21 @@
+# ============================================================
+# NetworkPolicy - deny-all (varsayilan kilit)
+# Amac: netpol-lab namespace'indeki TUM pod'lara gelen/giden
+#       trafigi engellemek (podSelector: {} = hepsini sec)
+#
+# Onemli kural:
+# - Policy yokken: her sey acik
+# - Bu policy gelince: sadece acikca izin verilen trafik gecer
+# ============================================================
+
+apiVersion: networking.k8s.io/v1   # NetworkPolicy API grubu
+kind: NetworkPolicy
+metadata:
+  name: deny-all                   # Policy adi
+  namespace: netpol-lab            # Sadece bu namespace'te gecerli
+spec:
+  podSelector: {}                  # Bos = namespace'teki butun pod'lar
+  policyTypes:
+  - Ingress                        # Gelen trafigi kisitla
+  - Egress                         # Giden trafigi kisitla
+  # ingress/egress kurallari yazilmadi = hicbir seye izin yok

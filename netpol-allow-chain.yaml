@@ -1,0 +1,71 @@
+# ============================================================
+# NetworkPolicy - izinli trafik zinciri
+# Amac: deny-all varken sadece su yolu acmak:
+#       frontend -> backend -> database
+#
+# Not: NetworkPolicy'de "deny" kurali yoktur.
+#      Once her seyi kilitlersin, sonra izin verirsin.
+# ============================================================
+
+# --- Frontend: sadece backend'e cikabilir ---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend-egress
+  namespace: netpol-lab
+spec:
+  podSelector:
+    matchLabels:
+      run: frontend              # Bu policy sadece frontend pod'una uygulanir
+  policyTypes:
+  - Egress                       # Sadece cikis trafigini duzenle
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          run: backend           # Frontend sadece backend pod'una gidebilir
+
+---
+# --- Backend: frontend'den girebilir, database'e cikabilir ---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: backend-rules
+  namespace: netpol-lab
+spec:
+  podSelector:
+    matchLabels:
+      run: backend               # Bu policy sadece backend pod'una uygulanir
+  policyTypes:
+  - Ingress                      # Gelen trafigi duzenle
+  - Egress                       # Giden trafigi duzenle
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          run: frontend          # Backend'e sadece frontend erisebilir
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          run: database          # Backend sadece database'e gidebilir
+
+---
+# --- Database: sadece backend'den girebilir ---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: database-ingress
+  namespace: netpol-lab
+spec:
+  podSelector:
+    matchLabels:
+      run: database              # Bu policy sadece database pod'una uygulanir
+  policyTypes:
+  - Ingress                      # Sadece gelen trafigi duzenle
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          run: backend           # Database'e sadece backend erisebilir
+  # egress kurali yok: database disari cikamaz (deny-all etkisi devam eder)
