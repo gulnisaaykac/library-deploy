@@ -1,0 +1,20 @@
+# ============================================================
+# UI Service (template)
+# Amac: UI'yi dışarı NodePort ile açmak (values'tan nodePort)
+# ============================================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: library-ui
+  labels:
+    app: library-ui
+spec:
+  type: {{ .Values.ui.service.type }} # NodePort
+  selector:
+    app: library-ui
+  ports:
+    - name: http
+      port: {{ .Values.ui.service.port }}          # 80
+      targetPort: http                              # nginx 80
+      nodePort: {{ .Values.ui.service.nodePort }}  # 30080 gibi

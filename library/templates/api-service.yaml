@@ -1,0 +1,31 @@
+# ============================================================
+# library Helm chart - API Service (template)
+# Amac:
+# - values.yaml içindeki api.service.* ayarlarını kullanmak
+# - NodePort ile dışarıdan erişimi sağlamak (api.yaml ile aynı mantık)
+# ============================================================
+
+apiVersion: v1 # Service için core API sürümü
+kind: Service
+metadata:
+  name: library-api
+  labels:
+    app: library-api
+spec:
+  # Service tipi (values.yaml: api.service.type) -> NodePort
+  type: {{ .Values.api.service.type }}
+
+  # Hangi pod’lara yönelecek? (Deployment label ile aynı olmalı)
+  selector:
+    app: library-api
+
+  ports:
+    - name: http
+      # Service portu (cluster içinde)
+      port: {{ .Values.api.service.port }}
+
+      # Hedef port (pod içinde); Deployment container portu ile aynı
+      targetPort: {{ .Values.api.service.port }}
+
+      # Dışarı açılacak sabit port (values.yaml: api.service.nodePort)
+      nodePort: {{ .Values.api.service.nodePort }}
