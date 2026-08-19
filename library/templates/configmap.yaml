@@ -1,0 +1,17 @@
+# ============================================================
+# Helm ile ConfigMap uret
+# Ad: release-api-config (ornek: librarytest-api-config)
+# Sifre/key YOK; onlar Secret'ta kalir
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "library.fullname" . }}-api-config
+  labels:
+    app: {{ include "library.fullname" . }}-api
+data:
+  ASPNETCORE_ENVIRONMENT: {{ .Values.api.config.environment | quote }}
+  ASPNETCORE_URLS: {{ .Values.api.config.urls | quote }}
+  Jwt__Issuer: {{ .Values.api.config.jwtIssuer | quote }}
+  Jwt__Audience: {{ .Values.api.config.jwtAudience | quote }}
+  Groq__Model: {{ .Values.api.config.groqModel | quote }}
