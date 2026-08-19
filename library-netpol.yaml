@@ -1,0 +1,28 @@
+# ============================================================
+# Library NetworkPolicy
+# Amac: library-api'ye sadece library-ui pod'lari erissin
+# Not: default namespace'e deny-all YOK (CoreDNS / Ingress bozulmasin)
+# Policy bir pod'u secince o pod icin Ingress default deny olur
+# ============================================================
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-from-ui
+  namespace: default
+spec:
+  # Bu kural library-api pod'larina uygulanir
+  podSelector:
+    matchLabels:
+      app: library-api
+  policyTypes:
+    - Ingress
+  ingress:
+    # Sadece UI pod'larindan gelen trafik
+    - from:
+        - podSelector:
+            matchLabels:
+              app: library-ui
+      ports:
+        - protocol: TCP
+          port: 8080
